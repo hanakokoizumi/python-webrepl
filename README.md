@@ -5,6 +5,8 @@ A beautiful, modern web-based Python REPL (Read-Eval-Print Loop) that runs in yo
 ![Python Version](https://img.shields.io/badge/python-3.6%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
+![Webpage](image.png)
+
 ## Installation
 
 Simply download the `webrepl.py` file - no installation required! The module uses only Python standard library components.
