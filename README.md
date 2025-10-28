@@ -85,6 +85,7 @@ Start a Web REPL interactive session.
 - `exitmsg` (str, optional): Message displayed when REPL session ends
 - `host` (str, default="localhost"): Server host address
 - `port` (int, optional): Server port (None = auto-select random free port)
+- `echo_terminal` (bool, optional): Whether to echo browser input/output to terminal
 
 **Returns:** None
 
@@ -98,7 +99,8 @@ webrepl.interact(
     local={"my_var": 42},
     exitmsg="Thanks for using the REPL!",
     host="localhost",
-    port=8000
+    port=8000,
+    echo_terminal=True
 )
 ```
 

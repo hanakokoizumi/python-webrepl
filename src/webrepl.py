@@ -1218,11 +1218,13 @@ class WebREPL:
     def __init__(self, local: Optional[Dict[str, Any]] = None, 
                  banner: Optional[str] = None,
                  host: str = "localhost",
-                 port: Optional[int] = None):
+                 port: Optional[int] = None,
+                 echo_terminal: bool = False):
         self.host = host
         self.port_preference = port
         self.port = None
         self.auto_port = (port is None)
+        self.echo_terminal = echo_terminal
         
         self.local = local if local is not None else {}
         self.banner = banner if banner is not None else (
@@ -1250,6 +1252,10 @@ class WebREPL:
             self.send_output(ws, self.banner + "\n", "banner")
             self.send_output(ws, ">>> ", "prompt")
             
+            if self.echo_terminal:
+                print(self.banner, file=sys.__stdout__)
+                print(">>> ", end="", flush=True, file=sys.__stdout__)
+            
             console = code.InteractiveConsole(locals=self.local)
             buffer = []
             
@@ -1260,6 +1266,13 @@ class WebREPL:
                 
                 if message == "__CLOSE__":
                     break
+                
+                if self.echo_terminal:
+                    if buffer:
+                        print(message, file=sys.__stdout__)
+                        print("... ", end="", flush=True, file=sys.__stdout__)
+                    else:
+                        print(message, file=sys.__stdout__)
                 
                 stdout_capture = io.StringIO()
                 stderr_capture = io.StringIO()
@@ -1294,14 +1307,24 @@ class WebREPL:
                     
                     if stdout_text:
                         self.send_output(ws, stdout_text, "stdout")
+                        if self.echo_terminal:
+                            print(stdout_text, end="", file=sys.__stdout__)
                     if stderr_text:
                         self.send_output(ws, stderr_text, "stderr")
+                        if self.echo_terminal:
+                            print(stderr_text, end="", file=sys.__stderr__)
                     
                     self.send_output(ws, ">>> ", "prompt")
+                    
+                    if self.echo_terminal:
+                        print(">>> ", end="", flush=True, file=sys.__stdout__)
                     
                 except Exception as e:
                     self.send_output(ws, f"Internal error: {e}\n", "stderr")
                     self.send_output(ws, ">>> ", "prompt")
+                    if self.echo_terminal:
+                        print(f"Internal error: {e}", file=sys.__stderr__)
+                        print(">>> ", end="", flush=True, file=sys.__stdout__)
         
         except Exception as e:
             print(f"Client handling error: {e}", file=sys.stderr)
@@ -1359,7 +1382,8 @@ def interact(banner: Optional[str] = None,
              local: Optional[Dict[str, Any]] = None,
              exitmsg: Optional[str] = None,
              host: str = "localhost",
-             port: Optional[int] = None):
+             port: Optional[int] = None,
+             echo_terminal: bool = False):
     """
     Start Web REPL interactive session
     
@@ -1373,6 +1397,7 @@ def interact(banner: Optional[str] = None,
         host: Server host
         port: Server port (None means auto-select a random free port)
               HTTP and WebSocket share the same port
+        echo_terminal: Whether to echo browser input/output to terminal (default: False)
     """
     if local is None:
         import inspect
@@ -1382,7 +1407,7 @@ def interact(banner: Optional[str] = None,
         else:
             local = {}
     
-    repl = WebREPL(local=local, banner=banner, host=host, port=port)
+    repl = WebREPL(local=local, banner=banner, host=host, port=port, echo_terminal=echo_terminal)
     repl.interact()
     
     if exitmsg:
